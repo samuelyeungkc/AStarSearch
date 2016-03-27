@@ -30,13 +30,21 @@ def removeNoise(line):
 	return line
 
 def getTotalRow():
-	TOTALROW = 18
-#	TOTALROW = 6 
-	return TOTALROW
+	row = 0
+	f = open('map', 'r')
+	line = f.readline()
+	while line != '':
+		row += 1
+		line = f.readline()
+	return row
 
 def getTotalCol():
-	TOTALCOL = 32
-#	TOTALCOL = 9
+	f = open('map', 'r')
+	line = f.readline()
+	line = removeNoise(line)
+	TOTALCOL = len(line)
+	f.close()
+
 	return TOTALCOL
 
 def getMap():
@@ -62,6 +70,7 @@ def getMap():
 		currentRow -= 1
 		line = f.readline()
 
+	f.close()
 	return map
 
 # return the location of the character : A, B, or C
@@ -104,12 +113,51 @@ def computeDistance(func,pos,des):
 # put the node into the queue if possible
 # i.e. there is such a node, the node free (not -1)
 # and the node is not visited before
-def testAndPutIntoQueueIfPossible(posX, posY, des, func, que, visited):
+def testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited):
 	neighbour = (posX, posY)
 	if (canGo(posX, posY, visited)):
 		prio = func(neighbour,des)
-		member = (prio, neighbour, posX, posY)
+		member = (prio, neighbour, copy_posX, copy_posY)
 		que.put(member)
+
+def countDistance (parent, des):
+	distance = 0
+	path = str(des)
+	nextPtX = des[0]
+	nextPtY = des[1]
+	
+	while (True):
+
+		nextPt = parent[nextPtX][nextPtY]
+		if (nextPt == (-1,-1)):
+			break
+		path = str(nextPt) + path
+		distance += 1
+
+
+		nextPtX = nextPt[0]
+		nextPtY = nextPt[1]
+		#print "working : @ " + str(nextPt)
+	return distance 
+
+def constructPath (parent, des):
+	path = str(des)
+	nextPtX = des[0]
+	nextPtY = des[1]
+	
+	while (True):
+
+		nextPt = parent[nextPtX][nextPtY]
+		if (nextPt == (-1,-1)):
+			break
+		path = str(nextPt) + path
+
+
+		nextPtX = nextPt[0]
+		nextPtY = nextPt[1]
+		#print "working : @ " + str(nextPt)
+
+	return path
 
 def aStar(pos, des, path, func):
 	
@@ -146,50 +194,55 @@ def aStar(pos, des, path, func):
 		parent[posX][posY] = (parentX, parentY)
 
 		if ( (posX,posY) == des ):
-			print parent
-			return path
-
+			#print parent
+			#return path
+			return constructPath(parent, des)
+		# make a copy of own location
+		copy_posX = int(pos[0])
+		copy_posY = int(pos[1])
 					
 		# compute bottom left
 		posX = int(pos[0]) - 1
 		posY = int(pos[1]) - 1
-		testAndPutIntoQueueIfPossible(posX, posY, des, func, que, visited)
+		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
 		
 
 		# compute central left
+		parentPosX = int(pos[0])
+		parentPosY = int(pos[1])
 		posX = int(pos[0]) - 1
 		posY = int(pos[1])
-		testAndPutIntoQueueIfPossible(posX, posY, des, func, que, visited)
+		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
 
 		# compute top left
 		posX = int(pos[0]) - 1
 		posY = int(pos[1]) + 1
-		testAndPutIntoQueueIfPossible(posX, posY, des, func, que, visited)
+		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
 
 		# compute bottom 
 		posX = int(pos[0])
 		posY = int(pos[1]) - 1
-		testAndPutIntoQueueIfPossible(posX, posY, des, func, que, visited)
+		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
 
 		# compute top 
 		posX = int(pos[0])
 		posY = int(pos[1]) + 1
-		testAndPutIntoQueueIfPossible(posX, posY, des, func, que, visited)
+		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
 
 		# compute bottom right
 		posX = int(pos[0]) + 1
 		posY = int(pos[1]) - 1
-		testAndPutIntoQueueIfPossible(posX, posY, des, func, que, visited)
+		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
 
 		# compute central right
 		posX = int(pos[0]) + 1
 		posY = int(pos[1])
-		testAndPutIntoQueueIfPossible(posX, posY, des, func, que, visited)
+		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
 
 		# compute top right
 		posX = int(pos[0]) + 1
 		posY = int(pos[1]) + 1
-		testAndPutIntoQueueIfPossible(posX, posY, des, func, que, visited)
+		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
 
 		if (que.empty()):
 			return "No Path\n" + "Path so far: " + path
@@ -201,16 +254,25 @@ bLoc = getLocation(map,'B')
 aLoc = getLocation(map, 'A')
 cLoc = getLocation(map, 'C')
 #print "A location: " + str(aLoc)
-print "C location: " + str(cLoc)
+#print "C location: " + str(cLoc)
 ACAdmi = getAdmissibleDistance(aLoc,cLoc)
 ACNonAdmi = getNonAdmissibleDistance(aLoc,cLoc)
 # A-C Admissible 28.0
 # A-C Non-Admissible 39.0
 
-result = aStar(aLoc, cLoc,"",getAdmissibleDistance)
-#result = aStar(aLoc, bLoc,"",getAdmissibleDistance)
-#result = aStar(aLoc, bLoc,"",getNonAdmissibleDistance)
-#result = aStar(aLoc, cLoc,"",getNonAdmissibleDistance)
-#result = aStar(aLoc, cLoc,"",getAdmissibleDistance)
-print "Result : "
+result = aStar(aLoc, bLoc,"",getAdmissibleDistance)
+print "A->B Admissible Result : "
 print result
+
+result = aStar(aLoc, bLoc,"",getNonAdmissibleDistance)
+print "A->B Non Admissible Result : "
+print result
+
+result = aStar(aLoc, cLoc,"",getAdmissibleDistance)
+print "A->C Admissible Result : "
+print result
+
+result = aStar(aLoc, cLoc,"",getNonAdmissibleDistance)
+print "A->C Non Admissible Result : "
+print result
+
