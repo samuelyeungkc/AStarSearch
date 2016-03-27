@@ -119,9 +119,13 @@ def aStar(pos, des, path, func):
 	currentY = pos[1]
 
 	que = Queue.PriorityQueue()
-	member = (0, pos)
+	member = (0, pos, -1, -1)
 	que.put(member)
 	visited = [[False for x in range(getTotalCol())] for x in range(getTotalRow())] 
+
+	# 2D array to hold where the path comes from
+	# ex. 2-5-8, 2 is 5 parent and 5 is 8 parent
+	parent = [[(-2,-2) for x in range(getTotalCol())] for x in range(getTotalRow())] 
 
 	while (1):
 	
@@ -131,15 +135,18 @@ def aStar(pos, des, path, func):
 		posY = int(pos[1])
 
 
+		# do no visit again visted node
 		if (visited[posX][posY]):
 			continue
 
 		path = path + str(pos)
 		visited[posX][posY] = True
-#		print "current path : " + path
-#		print que.qsize()
+		parentX = element[2]
+		parentY = element[3]
+		parent[posX][posY] = (parentX, parentY)
 
 		if ( (posX,posY) == des ):
+			print parent
 			return path
 
 					
