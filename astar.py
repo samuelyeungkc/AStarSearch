@@ -85,7 +85,7 @@ def getLocation(map,ch):
 
 # return the distance of two points using admissible heuristic function
 # pos,des - a tuple in (x,y) format
-def getAdmissibleDistance(pos, des):
+def getAdmissibleDistance(pos, des, cost=0):
 	posX = pos[0]
 	posY = pos[1]
 	desX = des[0]	
@@ -94,9 +94,10 @@ def getAdmissibleDistance(pos, des):
 	yDiff = (desY - posY) ** 2
 	diff = xDiff + yDiff
 	diff = math.pow(diff, 0.5)
-	return diff
+	cost += diff
+	return cost
 
-def getNonAdmissibleDistance(pos, des):
+def getNonAdmissibleDistance(pos, des, cost=0):
 	posX = pos[0]
 	posY = pos[1]
 	desX = des[0]	
@@ -104,7 +105,9 @@ def getNonAdmissibleDistance(pos, des):
 	xDiff = math.fabs(desX - posX)
 	yDiff = math.fabs(desY - posY) 
 	diff = xDiff + yDiff
-	return diff
+	cost += diff
+	cost += 100
+	return cost
 
 def computeDistance(func,pos,des):
 	return func(pos,des)
@@ -113,11 +116,12 @@ def computeDistance(func,pos,des):
 # put the node into the queue if possible
 # i.e. there is such a node, the node free (not -1)
 # and the node is not visited before
-def testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited):
-	neighbour = (posX, posY)
+def testAndPutQueue(curPos, neighbourPos, des, cost, func, que, visited):
+	posX = neighbourPos[0]
+	posY = neighbourPos[1]
 	if (canGo(posX, posY, visited)):
-		prio = func(neighbour,des)
-		member = (prio, neighbour, copy_posX, copy_posY)
+		prio = func(neighbourPos,des, cost)
+		member = (prio, neighbourPos, curPos[0], curPos[1])
 		que.put(member)
 
 def countDistance (parent, des):
@@ -150,7 +154,7 @@ def constructPath (parent, des):
 		nextPt = parent[nextPtX][nextPtY]
 		if (nextPt == (-1,-1)):
 			break
-		path = str(nextPt) + path
+		path = str(nextPt) + "->" + path
 
 
 		nextPtX = nextPt[0]
@@ -174,6 +178,8 @@ def aStar(pos, des, path, func):
 	# 2D array to hold where the path comes from
 	# ex. 2-5-8, 2 is 5 parent and 5 is 8 parent
 	parent = [[(-2,-2) for x in range(getTotalCol())] for x in range(getTotalRow())] 
+	
+	cost = 0
 
 	while (1):
 	
@@ -186,6 +192,9 @@ def aStar(pos, des, path, func):
 		# do no visit again visted node
 		if (visited[posX][posY]):
 			continue
+		
+		# increment cost
+		cost += 1
 
 		path = path + str(pos)
 		visited[posX][posY] = True
@@ -197,14 +206,17 @@ def aStar(pos, des, path, func):
 			#print parent
 			#return path
 			return constructPath(parent, des)
+
 		# make a copy of own location
-		copy_posX = int(pos[0])
-		copy_posY = int(pos[1])
+		posX = int(pos[0])
+		posY = int(pos[1])
+		curPos = (posX, posY)
 					
 		# compute bottom left
 		posX = int(pos[0]) - 1
 		posY = int(pos[1]) - 1
-		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
+		neighbourPos = (posX, posY)
+		testAndPutQueue(curPos, neighbourPos, des, cost, func, que, visited)
 		
 
 		# compute central left
@@ -212,37 +224,44 @@ def aStar(pos, des, path, func):
 		parentPosY = int(pos[1])
 		posX = int(pos[0]) - 1
 		posY = int(pos[1])
-		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
+		neighbourPos = (posX, posY)
+		testAndPutQueue(curPos, neighbourPos, des, cost, func, que, visited)
 
 		# compute top left
 		posX = int(pos[0]) - 1
 		posY = int(pos[1]) + 1
-		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
+		neighbourPos = (posX, posY)
+		testAndPutQueue(curPos, neighbourPos, des, cost, func, que, visited)
 
 		# compute bottom 
 		posX = int(pos[0])
 		posY = int(pos[1]) - 1
-		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
+		neighbourPos = (posX, posY)
+		testAndPutQueue(curPos, neighbourPos, des, cost, func, que, visited)
 
 		# compute top 
 		posX = int(pos[0])
 		posY = int(pos[1]) + 1
-		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
+		neighbourPos = (posX, posY)
+		testAndPutQueue(curPos, neighbourPos, des, cost, func, que, visited)
 
 		# compute bottom right
 		posX = int(pos[0]) + 1
 		posY = int(pos[1]) - 1
-		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
+		neighbourPos = (posX, posY)
+		testAndPutQueue(curPos, neighbourPos, des, cost, func, que, visited)
 
 		# compute central right
 		posX = int(pos[0]) + 1
 		posY = int(pos[1])
-		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
+		neighbourPos = (posX, posY)
+		testAndPutQueue(curPos, neighbourPos, des, cost, func, que, visited)
 
 		# compute top right
 		posX = int(pos[0]) + 1
 		posY = int(pos[1]) + 1
-		testAndPutIntoQueueIfPossible(copy_posX, copy_posY, posX, posY, des, func, que, visited)
+		neighbourPos = (posX, posY)
+		testAndPutQueue(curPos, neighbourPos, des, cost, func, que, visited)
 
 		if (que.empty()):
 			return "No Path\n" + "Path so far: " + path
@@ -253,10 +272,7 @@ map = getMap()
 bLoc = getLocation(map,'B')
 aLoc = getLocation(map, 'A')
 cLoc = getLocation(map, 'C')
-#print "A location: " + str(aLoc)
-#print "C location: " + str(cLoc)
-ACAdmi = getAdmissibleDistance(aLoc,cLoc)
-ACNonAdmi = getNonAdmissibleDistance(aLoc,cLoc)
+dLoc = getLocation(map, 'D')
 # A-C Admissible 28.0
 # A-C Non-Admissible 39.0
 
@@ -274,5 +290,13 @@ print result
 
 result = aStar(aLoc, cLoc,"",getNonAdmissibleDistance)
 print "A->C Non Admissible Result : "
+print result
+
+result = aStar(aLoc, dLoc,"",getAdmissibleDistance)
+print "A->D Admissible Result : "
+print result
+
+result = aStar(aLoc, dLoc,"",getNonAdmissibleDistance)
+print "A->D Non Admissible Result : "
 print result
 
